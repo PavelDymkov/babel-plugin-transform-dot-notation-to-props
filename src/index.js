@@ -1,7 +1,15 @@
 export default function({ types: t }) {
-	return {
+    return {
         inherits: require("babel-plugin-syntax-jsx"),
 
-        visitor: { }
+        visitor: {
+            JSXOpeningElement: function (path) {
+                let {name} = path.node;
+
+                if (t.isJSXMemberExpression(name)) {
+
+                }
+            }
+        }
     };
 };
