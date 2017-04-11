@@ -11,16 +11,24 @@ function isCorrectTagName({name}, {parentPath: { node: parentNode }}) {
     return false;
 }
 
-function toCorrectTypes(node) {
+function toCorrectTypes(array, node) {
     if (t.isJSXText(node)) {
-        return t.stringLiteral(node.value.trim());
+        let text = node.value.trim();
+
+        if (text) {
+            array.push(t.stringLiteral(text));
+        }
     }
 
     if (t.isJSXElement(node)) {
-        return node;
+        array.push(node);
     }
 
-    return t.nullLiteral();
+    return array;
+}
+
+function ofExistsAttributeWith({name: identifier}) {
+    return identifier.name == this.name;
 }
 
 
@@ -38,12 +46,32 @@ export default function({ types: t }) {
 
                     let originOpeningElementPath = path.parentPath.get("openingElement");
                     let {node: originOpeningElement} = originOpeningElementPath;
+                    let attributes = [...originOpeningElement.attributes];
 
-                    let arrayExpression = t.arrayExpression(node.children.map(toCorrectTypes));
+                    let elements = null;
+                    let index = attributes.findIndex(ofExistsAttributeWith, propertyIdentifier);
+
+                    if (index == -1) {
+                        elements = node.children.reduce(toCorrectTypes, []);
+                    } else {
+                        let [{value: originAttributeValue}] = attributes.splice(index, 1);
+
+                        if (!t.isJSXExpressionContainer(originAttributeValue))
+                            throw new Error;
+
+                        if (!t.isArrayExpression(originAttributeValue.expression))
+                            throw new Error;
+
+                        let {elements: originElements} = originAttributeValue.expression;
+
+                        elements = [...originElements, ...node.children.reduce(toCorrectTypes, [])];
+                    }
+
+                    let arrayExpression = t.arrayExpression(elements);
                     let attributeValue = t.jSXExpressionContainer(arrayExpression);
                     let attribute = t.jSXAttribute(propertyIdentifier, attributeValue);
 
-                    let attributes = [...originOpeningElement.attributes, attribute];
+                    attributes.push(attribute);
 
                     let openingElement = t.jSXOpeningElement(originOpeningElement.name, attributes, originOpeningElement.selfClosing);
 

@@ -8,6 +8,9 @@ let input = `
 let x = <Component>
     <Component.Item> foo </Component.Item>
     <Component.Item> bar </Component.Item>
+    <Component.Item>
+        <div>text</div>
+    </Component.Item>
 </Component>
 `;
 
