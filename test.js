@@ -11,6 +11,10 @@ let x = <Component>
     <Component.Item>
         <div>text</div>
     </Component.Item>
+    <Component.Item>
+        <div>text</div>
+        <div>text</div>
+    </Component.Item>
 </Component>
 `;
 
