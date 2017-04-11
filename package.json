@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "rimraf lib && babel src --out-dir lib",
-    "dev": "rimraf lib && babel src --out-dir lib --source-maps --watch",
+    "dev": "rimraf lib && babel src --out-dir lib --source-maps inline --watch",
     "prepublish": "npm run build",
     "test": "npm run build && mocha"
   },
