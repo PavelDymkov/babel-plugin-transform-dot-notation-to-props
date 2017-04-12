@@ -6,8 +6,10 @@ const babelOptions = {
 
 let input = `
 let x = <Component>
-    <Component.Item> foo </Component.Item>
-    <Component.Item> bar </Component.Item>
+    <Component.Item></Component.Item>
+    <Component.Item />
+    <Component.Item> string </Component.Item>
+    <Component.Item> { 123 } </Component.Item>
     <Component.Item>
         <div>text</div>
     </Component.Item>
