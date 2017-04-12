@@ -1,6 +1,3 @@
-// const t = require("babel-types");
-
-
 export default function({ types: t }) {
     return {
         inherits: require("babel-plugin-syntax-jsx"),
