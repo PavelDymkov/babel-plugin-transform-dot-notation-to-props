@@ -5,19 +5,27 @@ const babelOptions = {
 
 
 let input = `
-let x = <Component>
-    <Component.Item></Component.Item>
-    <Component.Item />
-    <Component.Item> string </Component.Item>
-    <Component.Item> { 123 } </Component.Item>
-    <Component.Item>
-        <div>text</div>
-    </Component.Item>
-    <Component.Item>
-        <div>text</div>
-        <div>text</div>
-    </Component.Item>
-</Component>
+let x = <div>
+    <Component>
+        <Component.Item></Component.Item>
+        <Component.Item />
+        <Component.Item> string </Component.Item>
+        <Component.Item> { 123 } </Component.Item>
+        <Component.Item>
+            <div>text</div>
+        </Component.Item>
+        <Component.Item>
+            <div>text</div>
+            <div>text</div>
+        </Component.Item>
+    </Component>
+    
+    <name:Component>
+        <Component.Item>
+            <div />
+        </Component.Item>
+    </name:Component>
+</div>
 `;
 
 // babel.transform(input, babelOptions).code;

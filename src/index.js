@@ -39,9 +39,9 @@ export default function({ types: t }) {
 
                 attributes.push(attribute);
 
-                let openingElement = t.jSXOpeningElement(originOpeningElement.name, attributes, originOpeningElement.selfClosing);
+                originOpeningElement.attributes = attributes;
 
-                originOpeningElementPath.replaceWith(openingElement);
+                originOpeningElementPath.replaceWith(originOpeningElement);
 
                 path.remove();
             }
@@ -51,9 +51,17 @@ export default function({ types: t }) {
 
     function isCorrectTagName({name}, {parentPath: { node: parentNode }}) {
         if (t.isJSXElement(parentNode)) {
-            let { name: parentName } = parentNode.openingElement.name;
+            let parentNameNode = parentNode.openingElement.name;
 
-            return name == parentName;
+            if (t.isJSXNamespacedName(parentNameNode)) {
+                let { name: parentName } = parentNameNode.name;
+
+                return name == parentName;
+            }
+
+            if (t.isJSXIdentifier(parentNameNode)) {
+                return name == parentNameNode.name;
+            }
         }
 
         return false;
