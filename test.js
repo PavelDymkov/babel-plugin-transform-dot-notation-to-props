@@ -1,6 +1,6 @@
 const babel = require("babel-core");
 const babelOptions = {
-    plugins: [["transform-dot-notation-to-props", { wrapper: '<span class="x" data-attr="0" />' }]]
+    plugins: ["transform-dot-notation-to-props"]
 };
 
 
