@@ -1,135 +1,114 @@
-const babel = require("babel-core");
-const {assert} = require("chai");
+const { assert } = require("chai");
+const createPluginTestHelper = require("babel-plugin-test-helper");
 
-const spaces = /\s+/g;
-let options = {
-    plugins: ["transform-dot-notation-to-props"]
-};
-
-function isEquil(input, expected) {
-    let output = babel.transform(input, options).code;
-
-    return output.replace(spaces, "") == expected.replace(spaces, "");
-}
+const isEqual = createPluginTestHelper(require("../"));
 
 
 describe("transform-dot-notation-to-props tests", () => {
-    it("should move div to prop array", () => {
+    it("should move div to props", () => {
         const input = `
-            <Component>
-                <Component.Item>
-                    <div>text</div>
-                </Component.Item>
-            </Component>
+            <component>
+                <component.item>
+                    <div />
+                </component.item>
+            </component>
         `;
         const output = `
-            <Component Item={[<div>text</div>]}>
-            </Component>;
+            <component item={<div />}>
+            </component>;
         `;
 
-        assert.isTrue(isEquil(input, output));
+        assert.isTrue(isEqual(input, output));
     });
 
-    it("should transform empty item to empty array", () => {
+    it("should just remove empty item", () => {
         const input = `
-            <Component>
-                <Component.Item></Component.Item>
-            </Component>
+            <component>
+                <component.item>
+                </component.item>
+
+                <component.anotherItem />
+            </component>;
         `;
         const output = `
-            <Component Item={[]}>
-            </Component>;
+            <component></component>;
         `;
 
-        assert.isTrue(isEquil(input, output));
+        assert.isTrue(isEqual(input, output));
     });
 
-    it("should transform empty item to empty array (2)", () => {
+    it("should trim string and append to props as string", () => {
         const input = `
-            <Component>
-                <Component.Item />
-            </Component>
+            <component>
+                <component.item>  string  </component.item>
+            </component>;
         `;
         const output = `
-            <Component Item={[]}>
-            </Component>;
+            <component item="string"></component>;
         `;
 
-        assert.isTrue(isEquil(input, output));
+        assert.isTrue(isEqual(input, output));
     });
 
-    it("should process string", () => {
+    it("should append experession to props", () => {
         const input = `
-            <Component>
-                <Component.Item> string </Component.Item>
-            </Component>
+            <component>
+                <component.item> { 123 } </component.item>
+            </component>;
         `;
         const output = `
-            <Component Item={["string"]}>
-            </Component>;
+            <component item={123}></component>;
         `;
 
-        assert.isTrue(isEquil(input, output));
+        assert.isTrue(isEqual(input, output));
     });
 
-    it("should process number", () => {
+    it("should add items to props as jsx fragment", () => {
         const input = `
-            <Component>
-                <Component.Item> { 123 } </Component.Item>
-            </Component>
-        `;
-        const output = `
-            <Component Item={[123]}>
-            </Component>;
-        `;
-
-        assert.isTrue(isEquil(input, output));
-    });
-
-    it("should add string to existing prop array", () => {
-        const input = `
-            <Component Item={["some string"]}>
-                <Component.Item> string </Component.Item>
-            </Component>
-        `;
-        const output = `
-            <Component Item={["some string", "string"]}>
-            </Component>;
-        `;
-
-        assert.isTrue(isEquil(input, output));
-    });
-
-    it("should add items to prop array", () => {
-        const input = `
-            <Component>
-                <Component.Item>
+            <component>
+                <component.item>
                     <div>text 1</div>
                     <div>text 2</div>
-                </Component.Item>
-            </Component>
+                </component.item>
+            </component>;
         `;
         const output = `
-            <Component Item={[<div>text 1</div>, <div>text 2</div>]}>
-            </Component>;
+            <component item={<><div>text 1</div><div>text 2</div></>}>
+            </component>;
         `;
 
-        assert.isTrue(isEquil(input, output));
+        assert.isTrue(isEqual(input, output));
     });
 
     it("should correct processing elements with namespace", () => {
         const input = `
-            <name:Component>
-                <Component.Item>
+            <name:component>
+                <component.item>
                     <div />
-                </Component.Item>
-            </name:Component>
+                </component.item>
+            </name:component>;
         `;
         const output = `
-            <name:Component Item={[<div />]}>
-            </name:Component>;
+            <name:component item={<div />}>
+            </name:component>;
         `;
 
-        assert.isTrue(isEquil(input, output));
+        assert.isTrue(isEqual(input, output));
+    });
+
+    it("should ignore capitalized props", () => {
+        let input = `
+            <component>
+                <component.Item>text</component.Item>
+                <component.item>text</component.item>
+            </component>;
+        `;
+        const output = `
+            <component item="text">
+                <component.Item>text</component.Item>
+            </component>;
+        `;
+
+        assert.isTrue(isEqual(input, output, { ignoreCapitalizedProps: true }));
     });
 });

@@ -1,97 +1,100 @@
-export default function({ types: t }) {
-    return {
-        inherits: require("babel-plugin-syntax-jsx"),
+import { types as t } from "@babel/core";
 
-        visitor: {
-            JSXElement: function (path) {
-                let {node} = path;
-                let {name: memberExpression} = node.openingElement;
 
-                if (!t.isJSXMemberExpression(memberExpression))
-                    return;
-                if (!isCorrectTagName(memberExpression.object, path))
-                    return;
+export default () => ({
+    name: "transform-dot-notation-to-props",
 
-                let propertyIdentifier = memberExpression.property;
+    manipulateOptions(_, parserOptions) {
+        let { plugins } = parserOptions;
 
-                let originOpeningElementPath = path.parentPath.get("openingElement");
-                let {node: originOpeningElement} = originOpeningElementPath;
-                let attributes = [...originOpeningElement.attributes];
-
-                let elements = null;
-                let index = attributes.findIndex(ofExistsAttributeWith, propertyIdentifier);
-
-                if (index == -1) {
-                    elements = node.children.reduce(toCorrectTypes, []);
-                } else {
-                    let [{value: originAttributeValue}] = attributes.splice(index, 1);
-
-                    let originElements =
-                        isCorrectAttributeValueType(originAttributeValue) ?
-                            originAttributeValue.expression.elements : [];
-
-                    elements = [...originElements, ...node.children.reduce(toCorrectTypes, [])];
-                }
-
-                let arrayExpression = t.arrayExpression(elements);
-                let attributeValue = t.jSXExpressionContainer(arrayExpression);
-                let attribute = t.jSXAttribute(propertyIdentifier, attributeValue);
-
-                attributes.push(attribute);
-
-                originOpeningElement.attributes = attributes;
-
-                originOpeningElementPath.replaceWith(originOpeningElement);
-
-                path.remove();
-            }
+        if (!plugins.includes("jsx")) {
+            plugins.push("jsx");
         }
-    };
+    },
 
+    visitor: {
+        JSXElement(path, { opts: { ignoreCapitalizedProps } }) {
+            let { node } = path;
+            let { name: memberExpression } = node.openingElement;
 
-    function isCorrectTagName({name}, {parentPath: { node: parentNode }}) {
-        if (t.isJSXElement(parentNode)) {
-            let parentNameNode = parentNode.openingElement.name;
+            if (not(t.isJSXMemberExpression(memberExpression))) return;
+            if (not(isCorrectTagName(memberExpression.object, path.parent))) return;
 
-            if (t.isJSXNamespacedName(parentNameNode)) {
-                let { name: parentName } = parentNameNode.name;
+            let propertyIdentifier = memberExpression.property;
 
-                return name == parentName;
+            if (ignoreCapitalizedProps) {
+                let [firstChar] = propertyIdentifier.name;
+
+                if (firstChar == firstChar.toUpperCase()) return;
             }
 
-            if (t.isJSXIdentifier(parentNameNode)) {
-                return name == parentNameNode.name;
+            let targetOpeningElementPath = path.parentPath.get("openingElement");
+
+            if (propsExistsOn(targetOpeningElementPath, propertyIdentifier))
+                throw new Error(`Duplicate props declaration: ${propertyIdentifier.name} is already exists`);
+
+            let attributeValue = toAttributeValue(node.children.filter(notEmptyTextNode));
+
+            if (attributeValue) {
+                let attribute = t.jsxAttribute(propertyIdentifier, attributeValue);
+
+                targetOpeningElementPath.pushContainer("attributes", attribute);
             }
+
+            path.remove();
+        }
+    }
+});
+
+
+function isCorrectTagName({ name }, parentNode) {
+    if (t.isJSXElement(parentNode)) {
+        let parentNameNode = parentNode.openingElement.name;
+
+        if (t.isJSXNamespacedName(parentNameNode)) {
+            let { name: parentName } = parentNameNode.name;
+
+            return name == parentName;
         }
 
-        return false;
-    }
-
-    function toCorrectTypes(array, node) {
-        if (t.isJSXText(node)) {
-            let text = node.value.trim();
-
-            if (text) {
-                array.push(t.stringLiteral(text));
-            }
+        if (t.isJSXIdentifier(parentNameNode)) {
+            return name == parentNameNode.name;
         }
-
-        if (t.isJSXExpressionContainer(node)) {
-            array.push(node.expression);
-        }
-
-        if (t.isJSXElement(node)) {
-            array.push(node);
-        }
-
-        return array;
     }
 
-    function ofExistsAttributeWith({name: identifier}) {
-        return identifier.name == this.name;
+    return false;
+}
+
+function propsExistsOn({ node: { attributes } }, propertyIdentifier) {
+    return attributes.findIndex(ofExistsAttributeWith, propertyIdentifier) != -1;
+}
+
+function ofExistsAttributeWith({name: identifier}) {
+    return identifier.name == this.name;
+}
+
+function toAttributeValue(children) {
+    if (children.length == 1) {
+        let [node] = children;
+
+        if (t.isJSXText(node)) return t.stringLiteral(node.value.trim());
+        if (t.isJSXExpressionContainer(node)) return node;
+        if (t.isJSXSpreadChild(node)) return t.jsxExpressionContainer(node.expression);
+
+        return t.jsxExpressionContainer(node);
     }
 
-    function isCorrectAttributeValueType(value) {
-        return t.isJSXExpressionContainer(value) && t.isArrayExpression(value.expression);
+    if (children.length == 0) {
+        return null;
     }
-};
+
+    return toAttributeValue([t.jsxFragment(t.jsxOpeningFragment(), t.jsxClosingFragment(), children)]);
+}
+
+function notEmptyTextNode(node) {
+    return t.isJSXText(node) ? node.value.trim() : true;
+}
+
+function not(value) {
+    return !value;
+}
