@@ -1,4 +1,5 @@
 import { types as t } from "@babel/core";
+import not from "logical-not";
 
 
 export default () => ({
@@ -7,7 +8,7 @@ export default () => ({
     manipulateOptions(_, parserOptions) {
         let { plugins } = parserOptions;
 
-        if (!plugins.includes("jsx")) {
+        if (not(plugins.includes("jsx"))) {
             plugins.push("jsx");
         }
     },
@@ -93,8 +94,4 @@ function toAttributeValue(children) {
 
 function notEmptyTextNode(node) {
     return t.isJSXText(node) ? node.value.trim() : true;
-}
-
-function not(value) {
-    return !value;
 }

@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-transform-dot-notation-to-props",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Transform React components with dot notation to props",
   "main": "lib/index.js",
   "scripts": {
@@ -24,14 +24,15 @@
   },
   "homepage": "https://github.com/PavelDymkov/babel-plugin-transform-dot-notation-to-props#readme",
   "dependencies": {
-    "@babel/core": "^7.1.6"
+    "@babel/core": "^7.3.3",
+    "logical-not": "^1.0.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.1.5",
-    "@babel/plugin-transform-modules-commonjs": "^7.1.0",
-    "babel-plugin-test-helper": "git+https://github.com/PavelDymkov/babel-plugin-test-helper.git",
+    "@babel/cli": "^7.2.3",
+    "@babel/plugin-transform-modules-commonjs": "^7.2.0",
+    "babel-plugin-test-helper": "^1.0.0",
     "chai": "^4.2.0",
     "mocha": "^5.2.0",
-    "rimraf": "^2.6.2"
+    "rimraf": "^2.6.3"
   }
 }
